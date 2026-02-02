@@ -1,5 +1,8 @@
 package com.security.authentication.service;
 
-public interface OtpService {
+import java.util.Map;
 
+public interface OtpService {
+void checkOtpRestriction(String email);
+void trackOtpRequests(String email);
 }
