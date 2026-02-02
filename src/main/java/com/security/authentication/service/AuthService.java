@@ -7,5 +7,5 @@ public interface AuthService {
 
     //signup only receive email
     //we will send the otp to this email
-    String signUp(SignupRequestDTO authRequestDTO);
+    void signUp(SignupRequestDTO authRequestDTO);
 }

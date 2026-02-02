@@ -5,4 +5,5 @@ import java.util.Map;
 public interface OtpService {
 void checkOtpRestriction(String email);
 void trackOtpRequests(String email);
+String getOtp();
 }

@@ -4,11 +4,14 @@ import com.security.authentication.exception.OtpRestrictionException;
 import com.security.authentication.service.OtpService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 
+@Service
 public class OtpServiceImpl implements OtpService {
 
     @Autowired
@@ -72,6 +75,11 @@ public class OtpServiceImpl implements OtpService {
             redisTemplate.opsForValue().set(lockKey, "TRUE", Duration.ofHours(2));
             throw new OtpRestrictionException("Multiple Otp requests, try again after 2 hr");
         }
+    }
+    public String getOtp(){
+        Random random=new Random();
+        int otp=random.nextInt(999999);
+        return String.format("%06d",otp);
     }
 
 }
