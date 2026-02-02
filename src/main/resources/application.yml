@@ -1,6 +1,19 @@
 spring:
+  config:
+    import: optional:file:.env.properties # This tells Spring to look outside src
   data:
     redis:
       url: ${REDIS_URL}
       ssl:
         enabled: true
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USER}
+    password: ${SMTP_PASS}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true

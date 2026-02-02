@@ -1,7 +1,7 @@
 package com.security.authentication.service;
 
 
-import com.security.authentication.dtos.SignupRequestDTO;
+import com.security.authentication.dtos.request.SignupRequestDTO;
 
 public interface AuthService {
 
