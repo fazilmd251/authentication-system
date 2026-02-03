@@ -7,15 +7,12 @@ import jakarta.validation.constraints.Size;
 public class VerifyOtpRequestDTO {
 
     @NotNull(message = "OTP is required")
-    @Size(max = 6,message ="Otp must be 6 digit" )
+    @Size(min = 6, max = 6, message = "OTP must be 6 digits")
     private String otp;
 
     @NotNull(message = "Email is required")
     @Email(message = "Provide a valid email")
     private String email;
-
-    @NotNull(message = "Password is required")
-    private String password;
 
     public VerifyOtpRequestDTO() {
     }
@@ -36,11 +33,4 @@ public class VerifyOtpRequestDTO {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 }

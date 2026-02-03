@@ -4,10 +4,10 @@ package com.security.authentication.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
-
-
+import lombok.Builder;
 
 @Entity
+@Table(name = "users")
 public class User {
 
     @Id
@@ -22,9 +22,10 @@ public class User {
     @NotNull
     private String password;
 
-//    @NotNull
-//    @Column(unique=true)
-//    private String userName;
+    @Column(unique=true,comment = "user name already available")
+    private String userName;
+
+    private boolean isVerified=false;
 
     public User() {}
 
@@ -52,11 +53,19 @@ public class User {
         this.password = password;
     }
 
-//    public String getUserName() {
-//        return userName;
-//    }
-//
-//    public void setUserName(String userName) {
-//        this.userName = userName;
-//    }
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(boolean verified) {
+        isVerified = verified;
+    }
 }

@@ -11,11 +11,10 @@ public class SignupRequestDTO {
     private String email;
 
     @NotNull(message = "Password is required")
+    @Size(min = 5,message = "Password must be at least 5 characters")
+    @Size(max = 50,message = "Password cannot exceed 50 characters")
     private String password;
 
-//    @Size(max = 100,message = "User name cannot exceed 100 characters")
-//    private String userName;
-    
 
 
     public String getEmail() {
@@ -33,12 +32,4 @@ public class SignupRequestDTO {
     public void setPassword(String password) {
         this.password = password;
     }
-
-//    public String getUserName() {
-//        return userName;
-//    }
-//
-//    public void setUserName(String userName) {
-//        this.userName = userName;
-//    }
 }

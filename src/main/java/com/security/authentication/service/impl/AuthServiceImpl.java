@@ -3,6 +3,7 @@ package com.security.authentication.service.impl;
 import com.security.authentication.dtos.request.SignupRequestDTO;
 import com.security.authentication.dtos.request.VerifyOtpRequestDTO;
 import com.security.authentication.exception.AlreadyExistsException;
+import com.security.authentication.exception.OtpRestrictionException;
 import com.security.authentication.model.User;
 import com.security.authentication.repository.AuthRepository;
 import com.security.authentication.service.AuthService;
@@ -35,9 +36,18 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void signUp(SignupRequestDTO authRequestDTO) {
         String email = authRequestDTO.getEmail();
+        String password = authRequestDTO.getPassword();
 
         otpService.checkOtpRestriction(email);
         otpService.trackOtpRequests(email);
+
+        String encodedPassword=passwordEncoder.encode(password);
+
+        User user=new User();
+        user.setEmail(email);
+        user.setPassword(encodedPassword);
+
+        authRepository.save(user);
         String otp = otpService.getOtp();
         mailService.mailSender(email, otp);
         redisTemplate.opsForValue().set("OTP:" + email, otp, Duration.ofMinutes(5));
@@ -47,23 +57,17 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public User verifyOtp(VerifyOtpRequestDTO verifyOtpRequestDTO) {
         String email = verifyOtpRequestDTO.getEmail();
-        String password = verifyOtpRequestDTO.getPassword();
-        boolean exists = authRepository.existsByEmail(email);
-        if (exists) {
+        User user = authRepository.findByEmail(email);
+        if (user==null) {
             redisTemplate.delete(OtpServiceImpl.otpKeys(email).values());
-            throw new AlreadyExistsException("User already exists with this email");
+            throw new AlreadyExistsException("User does not exist with this mail "+email+"try again later");
         }
         boolean isMatch = this.otpService.verifyOtp(verifyOtpRequestDTO);
 
-        if(isMatch){
-            String encodedPassword=passwordEncoder.encode(password);
-            // save user
-            User newUser = new User();
-            newUser.setEmail(email);
-            newUser.setPassword(encodedPassword);
-
-            return authRepository.save(newUser);
+        if(!isMatch){
+            throw new OtpRestrictionException("Invalid otp");
         }
-
+        user.setVerified(true);
+        return authRepository.save(user);
     }
 }
