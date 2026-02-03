@@ -3,6 +3,7 @@ package com.security.authentication.service.impl;
 import com.security.authentication.dtos.request.SignupRequestDTO;
 import com.security.authentication.dtos.request.VerifyOtpRequestDTO;
 import com.security.authentication.exception.AlreadyExistsException;
+import com.security.authentication.model.User;
 import com.security.authentication.repository.AuthRepository;
 import com.security.authentication.service.AuthService;
 import com.security.authentication.service.MailService;
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Map;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -33,15 +35,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void signUp(SignupRequestDTO authRequestDTO) {
         String email = authRequestDTO.getEmail();
-        String password = authRequestDTO.getPassword();
-
-
-        String encodedPassword = this.passwordEncoder.encode(password);
-
-
-        if (encodedPassword != null)
-            redisTemplate.opsForValue().set("PASSWORD:" + email, encodedPassword, Duration.ofMinutes(30));
-
 
         otpService.checkOtpRestriction(email);
         otpService.trackOtpRequests(email);
@@ -52,8 +45,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void verifyOtp(VerifyOtpRequestDTO verifyOtpRequestDTO) {
+    public User verifyOtp(VerifyOtpRequestDTO verifyOtpRequestDTO) {
         String email = verifyOtpRequestDTO.getEmail();
+        String password = verifyOtpRequestDTO.getPassword();
         boolean exists = authRepository.existsByEmail(email);
         if (exists) {
             redisTemplate.delete(OtpServiceImpl.otpKeys(email).values());
@@ -62,8 +56,13 @@ public class AuthServiceImpl implements AuthService {
         boolean isMatch = this.otpService.verifyOtp(verifyOtpRequestDTO);
 
         if(isMatch){
+            String encodedPassword=passwordEncoder.encode(password);
             // save user
-            //return user email
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setPassword(encodedPassword);
+
+            return authRepository.save(newUser);
         }
 
     }
