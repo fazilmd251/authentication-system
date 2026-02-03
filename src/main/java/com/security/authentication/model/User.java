@@ -21,9 +21,9 @@ public class User {
     @NotNull
     private String password;
 
-    @NotNull
-    @Column(unique=true)
-    private String userName;
+//    @NotNull
+//    @Column(unique=true)
+//    private String userName;
 
     public User() {}
 
@@ -51,11 +51,11 @@ public class User {
         this.password = password;
     }
 
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
+//    public String getUserName() {
+//        return userName;
+//    }
+//
+//    public void setUserName(String userName) {
+//        this.userName = userName;
+//    }
 }

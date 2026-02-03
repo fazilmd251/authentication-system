@@ -18,4 +18,10 @@ public class GlobalErrorHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
     }
 
+    @ExceptionHandler(AlreadyExistsException.class)
+    public ResponseEntity<Map<String,String>> handleAlreadyExistsException(AlreadyExistsException ex){
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message",ex.getMessage()));
+    }
+
+
 }

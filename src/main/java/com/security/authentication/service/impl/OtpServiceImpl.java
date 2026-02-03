@@ -1,5 +1,6 @@
 package com.security.authentication.service.impl;
 
+import com.security.authentication.dtos.request.VerifyOtpRequestDTO;
 import com.security.authentication.exception.OtpRestrictionException;
 import com.security.authentication.service.OtpService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ public class OtpServiceImpl implements OtpService {
                 "otpSpamCount", "OTP_SPAM_COUNT:" + email, //if 3 request  within 1hr block for 2 hr
                 "otpCoolDown", "OTP_COOLDOWN:" + email, //one minute waiting before new otp
                 "otpBlock", "OTP_BLOCK:" + email, //block if requests more than 6 times in 24 hrs
-                "otpWrongCount", "OTP_WRONG_COUNT:" + email, //block if requests more than 6 times in 24 hrs
+                "otpWrongCount", "OTP_WRONG_COUNT:" + email, //block if wrong attempts 3 times in 2 hrs
                 "otp", "OTP:" + email
         );
     }
@@ -41,6 +42,7 @@ public class OtpServiceImpl implements OtpService {
         if(Boolean.TRUE.equals(redisTemplate.hasKey(keys.get("otpBlock")))){
             throw new OtpRestrictionException("OTP request limit exceed ,try again after 24 hours");
         }
+
     }
 
     @Override
@@ -80,6 +82,37 @@ public class OtpServiceImpl implements OtpService {
         Random random=new Random();
         int otp=random.nextInt(999999);
         return String.format("%06d",otp);
+    }
+
+    @Override
+    public boolean verifyOtp(VerifyOtpRequestDTO verifyOtpRequestDTO){
+        String otp=verifyOtpRequestDTO.getOtp();
+        String email=verifyOtpRequestDTO.getEmail();
+        // Keys
+        String otpKey = "OTP:" + email;
+        String wrongCountKey = "OTP_WRONG_COUNT:" + email;
+        String lockKey = "OTP_SPAM_LOCK:" + email;
+
+        // 1. Get stored OTP
+        String storedOtp = (String) redisTemplate.opsForValue().get(otpKey);
+
+        if(storedOtp==null)throw new OtpRestrictionException("OTP has expired, Try again");
+
+        if(!storedOtp.equals(otp)){
+            Long currentWrongCount=redisTemplate.opsForValue().increment(wrongCountKey);
+            if(currentWrongCount!=null&&currentWrongCount==1){
+                redisTemplate.expire(wrongCountKey,Duration.ofHours(2));
+            }
+
+            if(currentWrongCount!=null&&currentWrongCount>=3){
+                redisTemplate.opsForValue().set(lockKey,"TRUE",Duration.ofHours(2));
+                redisTemplate.delete(otpKey);
+                throw new OtpRestrictionException("Multiple wrong attempts, Account locked for 2 hrs");
+            }
+
+            throw  new OtpRestrictionException("OTP verification failed");
+        }
+        return true;
     }
 
 }
