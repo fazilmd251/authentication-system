@@ -22,6 +22,8 @@ public class User {
     @NotNull
     private String password;
 
+    private String role="user";
+
     @Column(unique=true,comment = "user name already available")
     private String userName;
 
@@ -67,5 +69,13 @@ public class User {
 
     public void setVerified(boolean verified) {
         isVerified = verified;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

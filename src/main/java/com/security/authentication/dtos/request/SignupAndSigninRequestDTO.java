@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public class SignupRequestDTO {
+public class SignupAndSigninRequestDTO {
 
     @NotNull(message = "Email is required")
     @Email(message = "Provide a valid email")

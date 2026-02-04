@@ -1,6 +1,6 @@
 package com.security.authentication.controller;
 
-import com.security.authentication.dtos.request.SignupRequestDTO;
+import com.security.authentication.dtos.request.SignupAndSigninRequestDTO;
 import com.security.authentication.dtos.request.VerifyOtpRequestDTO;
 import com.security.authentication.model.User;
 import com.security.authentication.service.AuthService;
@@ -21,14 +21,8 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @GetMapping("/test")
-    public String test() {
-        //redisTemplate.opsForValue().set("status","works", Duration.ofSeconds(30));
-        return "works";
-    }
-
     @PostMapping("/signup")
-    public ResponseEntity<Map<String, String>> signup(@Validated @RequestBody SignupRequestDTO signupRequestDTO) {
+    public ResponseEntity<Map<String, String>> signup(@Validated @RequestBody SignupAndSigninRequestDTO signupRequestDTO) {
         this.authService.signUp(signupRequestDTO);
         return ResponseEntity.ok(Map.of("Message", "Otp sent to your email " + signupRequestDTO.getEmail() + " verify the account"));
     }
@@ -36,9 +30,13 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<User> verifyOtp(@Validated @RequestBody VerifyOtpRequestDTO verifyOtpRequestDTO) {
         User user = this.authService.verifyOtp(verifyOtpRequestDTO);
-
-        // Return the user object with a 201 Created or 200 OK status
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> login(@Validated @RequestBody SignupAndSigninRequestDTO login) {
+        String token = authService.login(login);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("token", token));
     }
 
 }
