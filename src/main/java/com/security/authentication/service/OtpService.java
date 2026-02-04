@@ -8,5 +8,5 @@ public interface OtpService {
 void checkOtpRestriction(String email);
 void trackOtpRequests(String email);
 String getOtp();
-    boolean verifyOtp(VerifyOtpRequestDTO verifyOtpRequestDTO);
+    boolean verifyOtp(VerifyOtpRequestDTO verifyOtpRequestDTO,String key);
 }

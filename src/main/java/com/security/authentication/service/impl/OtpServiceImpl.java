@@ -85,16 +85,15 @@ public class OtpServiceImpl implements OtpService {
     }
 
     @Override
-    public boolean verifyOtp(VerifyOtpRequestDTO verifyOtpRequestDTO){
+    public boolean verifyOtp(VerifyOtpRequestDTO verifyOtpRequestDTO,String key){
         String otp=verifyOtpRequestDTO.getOtp();
         String email=verifyOtpRequestDTO.getEmail();
         // Keys
-        String otpKey = "OTP:" + email;
         String wrongCountKey = "OTP_WRONG_COUNT:" + email;
         String lockKey = "OTP_SPAM_LOCK:" + email;
 
         // 1. Get stored OTP
-        String storedOtp = (String) redisTemplate.opsForValue().get(otpKey);
+        String storedOtp = (String) redisTemplate.opsForValue().get(key);
 
         if(storedOtp==null)throw new OtpRestrictionException("OTP has expired, Try again");
 
@@ -106,7 +105,7 @@ public class OtpServiceImpl implements OtpService {
 
             if(currentWrongCount!=null&&currentWrongCount>=3){
                 redisTemplate.opsForValue().set(lockKey,"TRUE",Duration.ofHours(2));
-                redisTemplate.delete(otpKey);
+                redisTemplate.delete(key);
                 throw new OtpRestrictionException("Multiple wrong attempts, Account locked for 2 hrs");
             }
 

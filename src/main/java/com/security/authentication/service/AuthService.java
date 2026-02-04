@@ -1,6 +1,7 @@
 package com.security.authentication.service;
 
 
+import com.security.authentication.dtos.request.ForgetAndResetPasswordDTO;
 import com.security.authentication.dtos.request.SignupAndSigninRequestDTO;
 import com.security.authentication.dtos.request.VerifyOtpRequestDTO;
 import com.security.authentication.dtos.response.LoginResponseDTO;
@@ -14,4 +15,7 @@ public interface AuthService {
     User verifyOtp(VerifyOtpRequestDTO verifyOtpRequestDTO);
     LoginResponseDTO login(SignupAndSigninRequestDTO loginDto);
     LoginResponseDTO refresh(String refreshToken);
+    void forgotPassword(ForgetAndResetPasswordDTO dto);
+    void resetPassword(ForgetAndResetPasswordDTO dto);
+    String verifyResetPasswordOtp(ForgetAndResetPasswordDTO dto);
 }

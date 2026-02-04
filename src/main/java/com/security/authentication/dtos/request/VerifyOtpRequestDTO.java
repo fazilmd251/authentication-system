@@ -17,6 +17,11 @@ public class VerifyOtpRequestDTO {
     public VerifyOtpRequestDTO() {
     }
 
+    public VerifyOtpRequestDTO(String otp, String email) {
+        this.otp = otp;
+        this.email = email;
+    }
+
     public String getOtp() {
         return otp;
     }

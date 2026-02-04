@@ -1,10 +1,14 @@
 package com.security.authentication.service.impl;
 
+import com.security.authentication.builder.MailBuildHelper;
+import com.security.authentication.builder.MailBuilder;
+import com.security.authentication.dtos.request.ForgetAndResetPasswordDTO;
 import com.security.authentication.dtos.request.SignupAndSigninRequestDTO;
 import com.security.authentication.dtos.request.VerifyOtpRequestDTO;
 import com.security.authentication.dtos.response.LoginResponseDTO;
 import com.security.authentication.exception.AlreadyExistsException;
 import com.security.authentication.exception.OtpRestrictionException;
+import com.security.authentication.exception.UserNotFoundException;
 import com.security.authentication.model.User;
 import com.security.authentication.repository.AuthRepository;
 import com.security.authentication.service.AuthService;
@@ -19,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.UUID;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -65,7 +70,8 @@ public class AuthServiceImpl implements AuthService {
         otpService.trackOtpRequests(email);
 
         String otp = otpService.getOtp();
-        mailService.mailSender(email, otp);
+        MailBuilder mail = new MailBuildHelper().buildSignupMail(email, otp);
+        mailService.mailSender(mail);
         // Store in Redis
         redisTemplate.opsForValue().set("OTP:" + email, otp, Duration.ofMinutes(5));
         redisTemplate.opsForValue().set("OTP_COOLDOWN:" + email, "success", Duration.ofMinutes(1));
@@ -79,7 +85,8 @@ public class AuthServiceImpl implements AuthService {
             redisTemplate.delete(OtpServiceImpl.otpKeys(email).values());
             throw new AlreadyExistsException("User does not exist with this mail " + email + "try again later");
         }
-        boolean isMatch = this.otpService.verifyOtp(verifyOtpRequestDTO);
+        String redisOtpKey = "OTP:" + email;
+        boolean isMatch = this.otpService.verifyOtp(verifyOtpRequestDTO, redisOtpKey);
 
         if (!isMatch) {
             throw new OtpRestrictionException("Invalid otp");
@@ -126,11 +133,68 @@ public class AuthServiceImpl implements AuthService {
         String newRefreshToken = jwtService.generateRefreshToken(user);
         String newAccessToken = jwtService.generateToken(user);
 
-        redisTemplate.opsForValue().set("REFRESH:"+email,newRefreshToken);
+        redisTemplate.opsForValue().set("REFRESH:" + email, newRefreshToken);
 
-        return new LoginResponseDTO(newAccessToken,newRefreshToken);
+        return new LoginResponseDTO(newAccessToken, newRefreshToken);
     }
 
+    @Override
+    public void forgotPassword(ForgetAndResetPasswordDTO dto) {
+
+        String email = dto.getEmail();
+
+        User user = authRepository.findByEmail(email);
+
+        if (user == null) {
+            //throw error exception
+        }
+        otpService.checkOtpRestriction(email);
+        otpService.trackOtpRequests(email);
+
+        String otp = otpService.getOtp();
+        MailBuilder mail = new MailBuildHelper().buildForgotPasswordMail(email, otp);
+        mailService.mailSender(mail);
+        redisTemplate.opsForValue().set("FORGOT_PASSWORD_OTP:" + email, otp, Duration.ofMinutes(5));
+    }
+
+    @Override
+    public String verifyResetPasswordOtp(ForgetAndResetPasswordDTO dto) {
+        String email = dto.getEmail();
+        String otp = dto.getOtp();
+
+        String redisOtpKey = "FORGOT_PASSWORD_OTP:" + email;
+        VerifyOtpRequestDTO object = new VerifyOtpRequestDTO(otp,email);
+        otpService.verifyOtp(object, redisOtpKey);
+
+        //this token is needed to reset password
+        String resetToken = UUID.randomUUID().toString();
+
+        redisTemplate.opsForValue().set("RESET_TOKEN:" + email, resetToken, Duration.ofMinutes(5));
+
+        return resetToken; // Send this back to the frontend
+    }
+
+    public void resetPassword(ForgetAndResetPasswordDTO dto) {
+        String email = dto.getEmail();
+        String resetTokenFromUser = dto.getResetToken();
+
+        String storedToken = (String) redisTemplate.opsForValue().get("RESET_TOKEN:" + email);
+
+        if (storedToken == null || !storedToken.equals(resetTokenFromUser)) {
+            throw new BadCredentialsException("Invalid or expired reset session.");
+        }
+
+        User user = authRepository.findByEmail(email);
+        if (user == null) throw new UserNotFoundException("User not found");
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        authRepository.save(user);
+
+        redisTemplate.delete("RESET_TOKEN:" + email);
+
+
+        redisTemplate.delete("REFRESH:" + email);
+    }
 }
 
 

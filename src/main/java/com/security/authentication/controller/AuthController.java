@@ -1,8 +1,12 @@
 package com.security.authentication.controller;
 
+import com.security.authentication.dtos.request.ForgetAndResetPasswordDTO;
 import com.security.authentication.dtos.request.SignupAndSigninRequestDTO;
 import com.security.authentication.dtos.request.VerifyOtpRequestDTO;
 import com.security.authentication.dtos.response.LoginResponseDTO;
+import com.security.authentication.dtos.validators.ForgotPasswordGroup;
+import com.security.authentication.dtos.validators.ResetPasswordGroup;
+import com.security.authentication.dtos.validators.VerifyOtpGroup;
 import com.security.authentication.model.User;
 import com.security.authentication.service.AuthService;
 import org.springframework.http.HttpHeaders;
@@ -61,6 +65,29 @@ public class AuthController {
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(Map.of("token", newAccessToken));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(
+            @Validated(ForgotPasswordGroup.class) @RequestBody ForgetAndResetPasswordDTO dto) {
+        authService.forgotPassword(dto);
+        return ResponseEntity.ok().body(Map.of("message", "OTP send to your registered email, " + dto.getEmail() + " check that out"));
+    }
+
+    @PostMapping("/verify-reset-password")
+    public ResponseEntity<Map<String, String>> verifyResetPasswordOtp(
+            @Validated(VerifyOtpGroup.class) @RequestBody ForgetAndResetPasswordDTO dto) {
+        authService.verifyResetPasswordOtp(dto);
+        // success logic
+        return ResponseEntity.ok().body(Map.of("", ""));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(
+            @Validated(ResetPasswordGroup.class) @RequestBody ForgetAndResetPasswordDTO dto) {
+        authService.resetPassword(dto);
+        // success logic
+        return ResponseEntity.ok().body(Map.of("", ""));
     }
 
 }
