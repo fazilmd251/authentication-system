@@ -20,7 +20,8 @@ import java.util.Map;
 @Service
 public class JwtService {
 
-    private final int EXPIRY = 1000 * 60 * 60 * 10; // 10 Hours
+    private final int EXPIRY = 1000 * 60 * 10 ; // 10 min
+    private final int REFRESH_EXPIRY = 1000 * 60 * 60 * 10; // 10 Hours
 
     @Value("${JWT_SECRET_PRIVATE}")
     private String privateKeyStr;
@@ -36,7 +37,14 @@ public class JwtService {
         this.privateKey = loadPrivateKey(privateKeyStr);
         this.publicKey = loadPublicKey(publicKeyStr);
     }
-
+public String generateRefreshToken(User user){
+    return Jwts.builder()
+            .subject(user.getEmail())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + REFRESH_EXPIRY))
+            .signWith(privateKey, Jwts.SIG.RS256)
+            .compact();
+}
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole());

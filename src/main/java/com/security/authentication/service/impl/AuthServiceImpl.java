@@ -2,6 +2,7 @@ package com.security.authentication.service.impl;
 
 import com.security.authentication.dtos.request.SignupAndSigninRequestDTO;
 import com.security.authentication.dtos.request.VerifyOtpRequestDTO;
+import com.security.authentication.dtos.response.LoginResponseDTO;
 import com.security.authentication.exception.AlreadyExistsException;
 import com.security.authentication.exception.OtpRestrictionException;
 import com.security.authentication.exception.UserNotFoundException;
@@ -86,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String login(SignupAndSigninRequestDTO loginDto) {
+    public LoginResponseDTO login(SignupAndSigninRequestDTO loginDto) {
         String email = loginDto.getEmail();
         String password = loginDto.getPassword();
 
@@ -99,36 +100,14 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        return jwtService.generateToken(user);
+        String accessToken=jwtService.generateToken(user);
+        String refreshToken=jwtService.generateRefreshToken(user);
+
+        redisTemplate.opsForValue().set("REFRESH:"+email,refreshToken,Duration.ofHours(1));
+
+        return new LoginResponseDTO(accessToken,refreshToken);
     }
 
 }
 
-//public void signUp(SignupAndSigninRequestDTO authRequestDTO) {
-//    String email = authRequestDTO.getEmail();
-//    String password = authRequestDTO.getPassword();
-//
-//    User existingUser=authRepository.findByEmail(email);
-//
-//    if(existingUser!=null&&!existingUser.isVerified()){
-//        this.notVerified(email);return;
-//    }
-//
-//
-//
-//
-//    otpService.checkOtpRestriction(email);
-//    otpService.trackOtpRequests(email);
-//
-//    String encodedPassword = passwordEncoder.encode(password);
-//
-//    User user = new User();
-//    user.setEmail(email);
-//    user.setPassword(encodedPassword);
-//
-//    authRepository.save(user);
-//    String otp = otpService.getOtp();
-//    mailService.mailSender(email, otp);
-//    redisTemplate.opsForValue().set("OTP:" + email, otp, Duration.ofMinutes(5));
-//    redisTemplate.opsForValue().set("OTP_COOLDOWN:" + email, "success", Duration.ofMinutes(1));
-//}
+

@@ -2,12 +2,18 @@ package com.security.authentication.controller;
 
 import com.security.authentication.dtos.request.SignupAndSigninRequestDTO;
 import com.security.authentication.dtos.request.VerifyOtpRequestDTO;
+import com.security.authentication.dtos.response.LoginResponseDTO;
 import com.security.authentication.model.User;
 import com.security.authentication.service.AuthService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
@@ -35,8 +41,16 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@Validated @RequestBody SignupAndSigninRequestDTO login) {
-        String token = authService.login(login);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("token", token));
+        LoginResponseDTO token = authService.login(login);
+        String accessToken = token.getAccessToken();
+        String refreshToken = token.getRefreshToken();
+
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true).secure(true).path("/").maxAge(7 * 24 * 60 * 10)
+                .sameSite("strict").build();
+
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of("token", accessToken));
     }
 
 }
