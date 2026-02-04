@@ -13,4 +13,5 @@ public interface AuthService {
     void signUp(SignupAndSigninRequestDTO authRequestDTO);
     User verifyOtp(VerifyOtpRequestDTO verifyOtpRequestDTO);
     LoginResponseDTO login(SignupAndSigninRequestDTO loginDto);
+    LoginResponseDTO refresh(String refreshToken);
 }

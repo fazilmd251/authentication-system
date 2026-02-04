@@ -5,12 +5,12 @@ import com.security.authentication.dtos.request.VerifyOtpRequestDTO;
 import com.security.authentication.dtos.response.LoginResponseDTO;
 import com.security.authentication.exception.AlreadyExistsException;
 import com.security.authentication.exception.OtpRestrictionException;
-import com.security.authentication.exception.UserNotFoundException;
 import com.security.authentication.model.User;
 import com.security.authentication.repository.AuthRepository;
 import com.security.authentication.service.AuthService;
 import com.security.authentication.service.MailService;
 import com.security.authentication.service.OtpService;
+import com.security.authentication.utils.ExtractClaims;
 import com.security.authentication.utils.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -35,6 +35,8 @@ public class AuthServiceImpl implements AuthService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtService jwtService;
+    @Autowired
+    private ExtractClaims extractClaims;
 
 
     @Override
@@ -100,12 +102,33 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        String accessToken=jwtService.generateToken(user);
-        String refreshToken=jwtService.generateRefreshToken(user);
+        String accessToken = jwtService.generateToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
 
-        redisTemplate.opsForValue().set("REFRESH:"+email,refreshToken,Duration.ofHours(1));
+        redisTemplate.opsForValue().set("REFRESH:" + email, refreshToken, Duration.ofHours(1));
 
-        return new LoginResponseDTO(accessToken,refreshToken);
+        return new LoginResponseDTO(accessToken, refreshToken);
+    }
+
+    public LoginResponseDTO refresh(String refreshToken) {
+        var sub = extractClaims.extractAllClaims(refreshToken);
+        String email = sub.getSubject();
+        String storedToken = (String) redisTemplate.opsForValue().get("REFRESH:" + email);
+        if (storedToken == null || !storedToken.equals(refreshToken)) {
+            redisTemplate.delete("REFRESH:" + email);
+            throw new BadCredentialsException("Security Alert: Session compromised. Please login again.");
+        }
+
+        redisTemplate.delete("REFRESH:" + email);
+
+        User user = authRepository.findByEmail(email);
+
+        String newRefreshToken = jwtService.generateRefreshToken(user);
+        String newAccessToken = jwtService.generateToken(user);
+
+        redisTemplate.opsForValue().set("REFRESH:"+email,newRefreshToken);
+
+        return new LoginResponseDTO(newAccessToken,newRefreshToken);
     }
 
 }
