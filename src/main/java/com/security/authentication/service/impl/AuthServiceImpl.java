@@ -146,7 +146,7 @@ public class AuthServiceImpl implements AuthService {
         User user = authRepository.findByEmail(email);
 
         if (user == null) {
-            //throw error exception
+            throw new BadCredentialsException("Invalid email");
         }
         otpService.checkOtpRestriction(email);
         otpService.trackOtpRequests(email);

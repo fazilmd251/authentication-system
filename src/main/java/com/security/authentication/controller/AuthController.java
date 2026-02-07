@@ -77,17 +77,17 @@ public class AuthController {
     @PostMapping("/verify-reset-password")
     public ResponseEntity<Map<String, String>> verifyResetPasswordOtp(
             @Validated(VerifyOtpGroup.class) @RequestBody ForgetAndResetPasswordDTO dto) {
-        authService.verifyResetPasswordOtp(dto);
+       String resetToken= authService.verifyResetPasswordOtp(dto);
         // success logic
-        return ResponseEntity.ok().body(Map.of("", ""));
+        return ResponseEntity.ok().body(Map.of("resetToken", resetToken));
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(
             @Validated(ResetPasswordGroup.class) @RequestBody ForgetAndResetPasswordDTO dto) {
         authService.resetPassword(dto);
-        // success logic
-        return ResponseEntity.ok().body(Map.of("", ""));
+
+        return ResponseEntity.ok().body(Map.of("message", "Password has been changed"));
     }
 
 }

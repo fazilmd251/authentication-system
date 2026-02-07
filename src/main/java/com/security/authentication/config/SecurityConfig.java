@@ -7,6 +7,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,13 +20,13 @@ class  SecurityConfig{
 
     @Bean
     public SecurityFilterChain securityFilter(HttpSecurity http) throws Exception{
-        String[] allowedUrl={"/health","/verify-token","/h2-console/**","/auth/signup","/auth/verify-otp","/auth/test","/auth/login"};
+        String[] allowedUrl={"/auth/reset-password","/auth/verify-reset-password","/auth/forgot-password","/refresh","/health","/verify-token","/h2-console/**","/auth/signup","/auth/verify-otp","/auth/test","/auth/login"};
         http.authorizeHttpRequests(req->req.requestMatchers(allowedUrl)
                 .permitAll().anyRequest().authenticated());
         http.sessionManagement(ses->ses
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.httpBasic(Customizer.withDefaults());
-        http.csrf(csrf->csrf.disable());
+        http.csrf(AbstractHttpConfigurer::disable);
         http.headers(h->h.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
         return http.build();
     }
