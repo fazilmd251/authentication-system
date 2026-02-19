@@ -47,8 +47,12 @@ public class AuthController {
         String refreshToken = token.getRefreshToken();
 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true).secure(true).path("/").maxAge(7 * 24 * 60 * 10)
-                .sameSite("strict").build();
+                .httpOnly(true)
+                //.secure(true)
+                .path("/").maxAge(7 * 24 * 60 * 10)
+                .sameSite("lax")
+                //.sameSite("strict")
+                .build();
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(Map.of("token", accessToken));

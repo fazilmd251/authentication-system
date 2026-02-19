@@ -13,6 +13,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -27,6 +30,36 @@ class  SecurityConfig{
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.httpBasic(Customizer.withDefaults());
         http.csrf(AbstractHttpConfigurer::disable);
+        http.cors(cors -> cors.configurationSource(request -> {
+            CorsConfiguration config = new CorsConfiguration();
+
+            // Allow Angular frontend
+            config.setAllowedOrigins(Arrays.asList(
+                    "http://localhost:4200",
+                    "http://127.0.0.1:4200"
+            ));
+
+            // All HTTP methods
+            config.setAllowedMethods(Arrays.asList(
+                    "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"
+            ));
+
+            // All common headers
+            config.setAllowedHeaders(Arrays.asList("*"));
+
+            // Expose headers to frontend
+            config.setExposedHeaders(Arrays.asList(
+                    "Authorization", "Content-Type"
+            ));
+
+            // Allow cookies/auth headers
+            config.setAllowCredentials(true);
+
+            // Preflight cache 1 hour
+            config.setMaxAge(3600L);
+
+            return config;
+        }));
         http.headers(h->h.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
         return http.build();
     }
